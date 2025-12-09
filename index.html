@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kuis Biologi Kelas 11</title>
+
+  <!-- Tailwind untuk styling cepat -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React + ReactDOM + Babel (development, inline JSX) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#f3f4f6; }
+  </style>
+</head>
+<body>
+  <div id="root" class="min-h-screen flex items-center justify-center p-6"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    /* ---------- Simple SVG icons (replacement lucide-react) ---------- */
+    const CheckCircle = ({ size = 24, className = "" }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    );
+    const RotateCcw = ({ size = 20 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
+    );
+    const ChevronRight = ({ size = 20 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    );
+    const ChevronLeft = ({ size = 20 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    );
+
+    /* -------------------- Component: BiologyQuiz -------------------- */
+    function BiologyQuiz() {
+      // Full 30-question bank (types: single, multiple, truefalse)
+      const questionBank = [
+        { id:1, type:"single", topic:"SEL", question:"Mengapa sel disebut sebagai unit struktural terkecil?", options:["Karena sel memiliki ukuran yang sangat kecil","Karena sel penyusun terkecil yang masih memiliki sifat hidup","Karena sel hanya dapat dilihat dengan mikroskop","Karena sel tidak dapat membelah","Karena sel tidak memiliki organel"], correct:1 },
+        { id:2, type:"single", topic:"ORGANEL SEL", question:"Organel yang berfungsi sebagai tempat respirasi sel adalah...", options:["Ribosom","Mitokondria","Kloroplas","Lisosom","Sentriol"], correct:1 },
+        { id:3, type:"single", topic:"TRANSPOR MEMBRAN", question:"Apa yang terjadi pada eritrosit ketika dimasukkan ke larutan hipotonik?", options:["Menciut","Tetap","Membengkak","Mengalami plasmolisis","Tidak berubah"], correct:2 },
+        { id:4, type:"single", topic:"TRANSPOR MEMBRAN", question:"Mengapa beberapa orang buang air kecil setelah berenang?", options:["Difusi natrium","Peningkatan osmosis pada tubuh","Tekanan osmotik air kolam","Air masuk ke tubuh melalui kulit","Keringat bercampur air"], correct:1 },
+        { id:5, type:"single", topic:"TRANSPOR MEMBRAN", question:"Dalam percobaan osmosis, kentang dalam larutan gula pekat mengalami penurunan tinggi permukaan air karena...", options:["Air berpindah dari kentang ke larutan","Air berpindah dari larutan ke kentang","Gula berpindah ke dalam kentang","Kentang melepaskan CO₂","Kentang mengembang"], correct:0 },
+
+        { id:6, type:"multiple", topic:"JARINGAN TUMBUHAN", question:"Ciri-ciri jaringan parenkim ditunjukkan oleh nomor... (pilih 3)", options:["Dinding tipis","Banyak ruang antarsel","Mengandung lignin tinggi","Bentuk sel tidak tetap","Sel mati"], correct:[0,1,3] },
+        { id:7, type:"multiple", topic:"METAGENESIS PTERIDOPHYTA", question:"Bagian yang menghasilkan spora pada tumbuhan paku adalah... (pilih 1 atau lebih)", options:["Protalium","Arkegonium","Sporofil","Anteridium","Sporofit"], correct:[2] },
+        { id:8, type:"single", topic:"GERAK PADA TUMBUHAN", question:"Mekarnya bunga pukul empat (Mirabilis jalapa) pada sore hari merupakan contoh gerak...", options:["Gerak tropisme positif","Gerak tropisme negatif","Gerak nasti","Gerak taksis","Gerak lokomosi"], correct:2 },
+        { id:9, type:"single", topic:"JARINGAN HEWAN", question:"Otot yang bercabang, berinti satu, bekerja tidak sadar, dan tidak mudah lelah adalah...", options:["Otot polos","Otot lurik","Otot jantung","Otot rangka","Otot halus"], correct:2 },
+        { id:10, type:"single", topic:"JARINGAN HEWAN", question:"Jaringan yang menyusun dinding lambung adalah...", options:["Epitel pipih berlapis","Epitel silindris berlapis","Epitel kubus selapis","Epitel pipih selapis","Jaringan ikat"], correct:1 },
+
+        { id:11, type:"single", topic:"SISTEM PENCERNAAN", question:"Proses pencernaan yang terjadi di mulut meliputi...", options:["Pencernaan mekanik saja","Pencernaan kimiawi saja","Pencernaan mekanik dan kimiawi","Hanya penyerapan nutrisi","Pencernaan enzim protein"], correct:2 },
+        { id:12, type:"multiple", topic:"SISTEM PENCERNAAN", question:"Pasangan organ–enzim–fungsi yang tepat adalah... (pilih 2–3)", options:["Lambung - Pepsin - Mengubah protein menjadi asam amino","Pankreas - Lipase - Mengubah lemak menjadi asam lemak dan gliserol","Usus halus - HCl - Membunuh bakteri","Mulut - Tripsin - Mengubah protein menjadi pepton","Mulut - Amilase - Mengubah amilum menjadi maltosa"], correct:[0,1,4] },
+        { id:13, type:"single", topic:"SISTEM PENCERNAAN", question:"Urutan pencernaan karbohidrat yang benar adalah...", options:["Amilum → Maltosa → Glukosa","Amilum → Glukosa → Maltosa","Protein → Pepton → Asam amino","Lemak → Gliserol → Asam lemak","Amilum → Fruktosa"], correct:0 },
+        { id:14, type:"single", topic:"SISTEM PENCERNAAN", question:"Seseorang mengalami diare, muntah, dan dehidrasi setelah makanan tidak higienis. Penyakit yang dialami adalah...", options:["Maag","Gastroenteritis","Konstipasi","Apendisitis","Hepatitis"], correct:1 },
+
+        { id:15, type:"single", topic:"SISTEM SIRKULASI DARAH", question:"Pembuluh darah yang membawa darah kaya CO₂ adalah...", options:["Vena pulmonalis","Arteri pulmonalis","Aorta","Arteri karotis","Vena jugularis"], correct:1 },
+        { id:16, type:"single", topic:"SISTEM SIRKULASI DARAH", question:"Dari tabel berikut, kondisi darah yang paling sehat adalah (nilai normal eritrosit 4.5-5.5 juta/mm³, leukosit 6.000-10.000/mm³, trombosit 150.000-400.000/mm³): A: E 5, L 8.000, T 250.000 ... Pilih kondisi yang normal", options:["Kondisi A","Kondisi B","Kondisi C","Kondisi D","Kondisi E"], correct:0 },
+        { id:17, type:"single", topic:"SISTEM SIRKULASI DARAH", question:"Setelah darah disentrifugasi, bagian yang mengendap di dasar tabung adalah...", options:["Plasma darah","Serum","Sel-sel darah (eritrosit, leukosit, trombosit)","Fibrinogen","Air"], correct:2 },
+        { id:18, type:"multiple", topic:"SISTEM SIRKULASI DARAH", question:"Urutan reaksi pembekuan darah yang benar adalah... (pilih urutan/elemen penting)", options:["Protrombin → Trombin → Fibrinogen → Fibrin","Fibrinogen → Fibrin → Protrombin → Trombin","Trombin → Protrombin → Fibrin → Fibrinogen","Fibrin → Fibrinogen → Trombin → Protrombin","Kalsium diperlukan"], correct:[0,4] },
+
+        { id:19, type:"single", topic:"SISTEM PERNAPASAN", question:"Mekanisme inspirasi terjadi karena...", options:["Otot antartulang rusuk dan diafragma relaksasi","Otot antartulang rusuk dan diafragma kontraksi, rongga dada membesar","Tekanan udara di paru lebih tinggi dari luar","Otot-otot perut berkontraksi","Diafragma naik"], correct:1 },
+        { id:20, type:"single", topic:"SISTEM PERNAPASAN", question:"Asap kendaraan mengandung karbon monoksida (CO) yang berbahaya karena...", options:["CO merusak paru-paru secara langsung","CO berikatan dengan hemoglobin lebih kuat dari O₂","CO menyebabkan infeksi pernapasan","CO merusak alveolus","CO meningkatkan respirasi"], correct:1 },
+
+        { id:21, type:"single", topic:"JARINGAN TUMBUHAN", question:"Jaringan yang tersusun rapat dengan banyak kloroplas dan berfungsi fotosintesis adalah...", options:["Parenkim palisade","Parenkim spons","Epidermis","Xilem","Floem"], correct:0 },
+        { id:22, type:"single", topic:"JARINGAN TUMBUHAN", question:"Respons tumbuhan terhadap herbivora yang melibatkan hormon adalah...", options:["Auksin","Giberelin","Asam jasmonat","Sitokinin","Etilen"], correct:2 },
+        { id:23, type:"single", topic:"SISTEM PENCERNAAN", question:"Waktu makan optimal untuk makan siang jika sarapan pukul 07.00 adalah...", options:["09.00 - 10.00","11.00 - 12.00","13.00 - 14.00","15.00 - 16.00","10.00 - 11.00"], correct:1 },
+        { id:24, type:"single", topic:"SISTEM SIRKULASI DARAH", question:"Manakah hubungan struktur–fungsi pembuluh darah yang tepat?", options:["Arteri - dinding tipis - tekanan darah rendah","Vena - memiliki katup - mencegah aliran balik darah","Kapiler - dinding tebal - pertukaran zat","Arteri - tidak elastis - menahan tekanan tinggi","Vena - tidak memiliki katup"], correct:1 },
+
+        { id:25, type:"single", topic:"SISTEM PERNAPASAN", question:"Pasangan penyakit dan penyebabnya yang tepat adalah...", options:["Asma - Virus influenza","Tuberkulosis - Mycobacterium tuberculosis","Pneumonia - Alergen","Bronkitis - Plasmodium","Aspergillosis - Bakteri"], correct:1 },
+        { id:26, type:"truefalse", topic:"TRANSPOR MEMBRAN", question:"Perhatikan pernyataan tentang transpor membran", statements:[ {text:"Osmosis adalah perpindahan air melalui membran semipermeabel dari konsentrasi tinggi ke rendah", correct:true}, {text:"Difusi memerlukan energi ATP untuk berlangsungnya", correct:false}, {text:"Transpor aktif dapat melawan gradien konsentrasi", correct:true}, {text:"Osmosis hanya terjadi pada sel tumbuhan", correct:false} ] },
+
+        { id:27, type:"multiple", topic:"JARINGAN HEWAN", question:"Karakteristik epitel silindris berlapis antara lain... (pilih semua yang benar)", options:["Sel berbentuk silindris dan tersusun berlapis","Memiliki sel goblet penghasil mukus","Ditemukan di saluran pencernaan","Berfungsi untuk difusi dan filtrasi","Memiliki silia pada permukaannya"], correct:[0,1,2,4] },
+        { id:28, type:"single", topic:"SISTEM PENCERNAAN", question:"Hasil uji makanan: Lugol: biru kehitaman, Benedict: merah bata, Biuret: ungu. Kandungan makanan tersebut adalah...", options:["Hanya karbohidrat","Karbohidrat, glukosa, dan protein","Hanya protein","Lemak dan protein","Hanya gula"], correct:1 },
+        { id:29, type:"multiple", topic:"SISTEM SIRKULASI DARAH", question:"Golongan darah O dapat mendonorkan darah kepada...", options:["Golongan A","Golongan B","Golongan AB","Golongan O","Semua golongan"], correct:[0,1,2,3,4] },
+        { id:30, type:"truefalse", topic:"SISTEM PERNAPASAN", question:"Diagnosis: batuk berdahak >2 minggu, demam, berkeringat malam, penurunan berat badan. Pernyataan: TBC mungkin menjadi diagnosis.", statements:[ {text:"Gejala tersebut khas TBC", correct:true}, {text:"Diagnosis pasti tanpa tes tidak mungkin", correct:true}, {text:"Pengobatan harus segera setelah diagnosis konfirmasi", correct:true} ] },
+      ];
+
+      const [questions, setQuestions] = useState([]);
+      const [index, setIndex] = useState(0);
+      const [answers, setAnswers] = useState({});
+      const [score, setScore] = useState(0);
+      const [showResult, setShowResult] = useState(false);
+
+      useEffect(() => {
+        setQuestions(shuffle(questionBank));
+      }, []);
+
+      function shuffle(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      const handleSelectSingle = (i) => {
+        setAnswers(prev => ({ ...prev, [questions[index].id]: i }));
+      };
+
+      const handleSelectMultiple = (i) => {
+        const q = questions[index];
+        setAnswers(prev => {
+          const prevArr = prev[q.id] || [];
+          let updated;
+          if (prevArr.includes(i)) updated = prevArr.filter(x => x !== i);
+          else updated = [...prevArr, i];
+          return { ...prev, [q.id]: updated };
+        });
+      };
+
+      const handleTrueFalse = (stmtIndex, val) => {
+        const q = questions[index];
+        setAnswers(prev => {
+          const prevObj = { ...(prev[q.id] || {}) };
+          prevObj[stmtIndex] = val;
+          return { ...prev, [q.id]: prevObj };
+        });
+      };
+
+      const handleNext = () => {
+        const q = questions[index];
+        const ans = answers[q.id];
+
+        if (q.type === "single" && ans === undefined) { alert("Pilih jawaban dulu!"); return; }
+        if (q.type === "multiple" && (!ans || ans.length === 0)) { alert("Pilih minimal satu jawaban!"); return; }
+        if (q.type === "truefalse" && (!ans || Object.keys(ans).length !== q.statements.length)) { alert("Jawab semua pernyataan!"); return; }
+
+        if (index + 1 < questions.length) setIndex(index + 1);
+        else calculateFinalScore();
+      };
+
+      const calculateFinalScore = () => {
+        let finalScore = 0;
+        questions.forEach((q) => {
+          const ans = answers[q.id];
+          if (ans === undefined || ans === null) return;
+
+          if (q.type === "single" && ans === q.correct) finalScore++;
+          else if (q.type === "multiple") {
+            const a = [...ans].sort().join();
+            const c = [...q.correct].sort().join();
+            if (a === c) finalScore++;
+          }
+          else if (q.type === "truefalse") {
+            const ok = q.statements.every((s, i) => ans[i] === s.correct);
+            if (ok) finalScore++;
+          }
+        });
+        setScore(finalScore);
+        setShowResult(true);
+      };
+
+      const handlePrev = () => {
+        if (index > 0) setIndex(index - 1);
+      };
+
+      const restart = () => {
+        setQuestions(shuffle(questionBank));
+        setAnswers({});
+        setIndex(0);
+        setScore(0);
+        setShowResult(false);
+      };
+
+      if (questions.length === 0) return <div className="p-10 text-center">Memuat soal...</div>;
+      const q = questions[index];
+
+      return (
+        <>
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+            <div className="w-full max-w-3xl bg-white shadow-xl rounded-2xl overflow-hidden">
+              <div className="bg-blue-600 p-6 text-white">
+                <h1 className="text-2xl font-bold flex items-center gap-2">🧬 Kuis Biologi Kelas 11</h1>
+              </div>
+
+              <div className="p-6">
+                {showResult ? (
+                  <div className="text-center py-8">
+                    <div className="flex justify-center mb-4"><CheckCircle size={80} className="text-green-500" /></div>
+                    <h2 className="text-3xl font-bold mb-2">Kuis Selesai!</h2>
+                    <p className="text-gray-600 mb-6">Kamu telah menyelesaikan semua soal.</p>
+
+                    <div className="text-5xl font-bold text-blue-600 mb-2">{Math.round((score / questions.length) * 100)}</div>
+                    <p className="text-sm text-gray-400 uppercase tracking-widest mb-8">Nilai Akhir</p>
+
+                    <div className="text-gray-700 mb-8 bg-gray-100 p-4 rounded-lg inline-block">
+                      Benar: <strong>{score}</strong> dari <strong>{questions.length}</strong> soal
+                    </div>
+
+                    <div>
+                      <button onClick={restart} className="flex items-center gap-2 mx-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold">
+                        <RotateCcw size={20} /> Ulangi Kuis
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-full bg-gray-200 h-2 rounded-full mb-6">
+                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${((index + 1) / questions.length) * 100}%` }}></div>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">{q.topic}</span>
+                      <span className="text-gray-400 text-sm">Soal {index + 1} dari {questions.length}</span>
+                    </div>
+
+                    <h3 className="text-xl font-semibold text-gray-800 mb-6 min-h-[60px]">{q.question}</h3>
+
+                    {q.type === "single" && (
+                      <div className="grid gap-3">
+                        {q.options.map((opt,i) => {
+                          const isSelected = answers[q.id] === i;
+                          return (
+                            <button key={i} onClick={() => handleSelectSingle(i)} className={`p-4 border-2 rounded-xl text-left transition-all ${isSelected ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-100 bg-gray-50 hover:bg-gray-100 text-gray-700"}`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm ${isSelected ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"}`}>{String.fromCharCode(65+i)}</div>
+                                {opt}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {q.type === "multiple" && (
+                      <div className="grid gap-3">
+                        <p className="text-sm text-orange-500 mb-2 italic">* Pilih lebih dari satu jawaban</p>
+                        {q.options.map((opt,i) => {
+                          const isSelected = (answers[q.id] || []).includes(i);
+                          return (
+                            <button key={i} onClick={() => handleSelectMultiple(i)} className={`p-4 border-2 rounded-xl text-left transition-all ${isSelected ? "border-green-500 bg-green-50 text-green-700" : "border-gray-100 bg-gray-50 hover:bg-gray-100 text-gray-700"}`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-6 h-6 border-2 rounded flex items-center justify-center ${isSelected ? "bg-green-500 border-green-500" : "border-gray-300 bg-white"}`}>{isSelected ? "✓" : ""}</div>
+                                {opt}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {q.type === "truefalse" && (
+                      <div className="grid gap-4">
+                        {q.statements.map((s, idx) => {
+                          const val = answers[q.id]?.[idx];
+                          return (
+                            <div key={idx} className="bg-white border rounded-lg p-4 shadow-sm">
+                              <p className="mb-3 font-medium text-gray-700">{s.text}</p>
+                              <div className="flex gap-4">
+                                <button onClick={() => handleTrueFalse(idx, true)} className={`flex-1 py-2 rounded-lg border font-semibold ${val === true ? "bg-blue-500 text-white border-blue-500" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>BENAR</button>
+                                <button onClick={() => handleTrueFalse(idx, false)} className={`flex-1 py-2 rounded-lg border font-semibold ${val === false ? "bg-red-500 text-white border-red-500" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>SALAH</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between mt-8 pt-6 border-t">
+                      <button onClick={handlePrev} disabled={index === 0} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${index === 0 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"}`}><ChevronLeft size={20} /> Sebelumnya</button>
+
+                      <button onClick={handleNext} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-lg transition-all">
+                        {index === questions.length - 1 ? "Selesai & Lihat Nilai" : "Selanjutnya"} <ChevronRight size={20} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<BiologyQuiz />);
+  </script>
+</body>
+</html>
